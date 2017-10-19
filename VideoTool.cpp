@@ -190,6 +190,7 @@ int main(int argc, char* argv[])
 	Mat HSV;
 	//matrix storage for binary threshold image
 	Mat threshold;
+  Mat threshold2;
 	//x and y values for the location of the object
 	int x = 0, y = 0;
 	//create slider bars for HSV filtering
@@ -197,7 +198,7 @@ int main(int argc, char* argv[])
 	//video capture object to acquire webcam feed
 	VideoCapture capture;
 	//open capture object at location zero (default location for webcam)
-	capture.open(0);
+	capture.open("rtmp://172.16.254.99/live/nimic");
 	//set height and width of capture frame
 	capture.set(CV_CAP_PROP_FRAME_WIDTH, FRAME_WIDTH);
 	capture.set(CV_CAP_PROP_FRAME_HEIGHT, FRAME_HEIGHT);
@@ -216,21 +217,28 @@ int main(int argc, char* argv[])
 		cvtColor(cameraFeed, HSV, COLOR_BGR2HSV);
 		//filter HSV image between values and store filtered image to
 		//threshold matrix
-		inRange(HSV, Scalar(H_MIN, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold);
+		inRange(HSV, Scalar(H_MIN, 172, 16), Scalar(H_MAX, S_MAX, V_MAX), threshold);
+    inRange(HSV, Scalar(171, S_MIN, V_MIN), Scalar(H_MAX, S_MAX, V_MAX), threshold2);
 		//perform morphological operations on thresholded image to eliminate noise
 		//and emphasize the filtered object(s)
 		if (useMorphOps)
+     {
 			morphOps(threshold);
+      morphOps(threshold2);
+     }
 		//pass in thresholded frame to our object tracking function
 		//this function will return the x and y coordinates of the
 		//filtered object
 		if (trackObjects)
+     {
 			trackFilteredObject(x, y, threshold, cameraFeed);
+      trackFilteredObject(x, y, threshold2, cameraFeed);
+     }
 
 		//show frames
 		imshow(windowName2, threshold);
 		imshow(windowName, cameraFeed);
-		imshow(windowName1, HSV);
+		//imshow(windowName1, HSV);
 		setMouseCallback("Original Image", on_mouse, &p);
 		//delay 30ms so that screen can refresh.
 		//image will not appear without this waitKey() command
