@@ -15,12 +15,18 @@ using namespace std;
 using namespace cv;
 //initial min and max HSV filter values.
 //these will be changed using trackbars
-/*int H_MIN = 0;
+int H_MIN = 0;
 int H_MAX = 256;
 int S_MIN = 0;
 int S_MAX = 256;
 int V_MIN = 0;
 int V_MAX = 256;
+int sock = 0;
+int me[3][3];
+int poz[2];
+int enemy[3][3];
+int enemypoz[2];
+int x=0,y=0,x1=0,y1=0;
 //default capture width and height
 const int FRAME_WIDTH = 640;
 const int FRAME_HEIGHT = 480;
@@ -179,9 +185,82 @@ void trackFilteredObject(int &x, int &y, Mat threshold, Mat &cameraFeed) {
 		}
 		else putText(cameraFeed, "TOO MUCH NOISE! ADJUST FILTER", Point(0, 50), 1, 2, Scalar(0, 0, 255), 2);
 	}
-}*/
+}
 
-void sendcommand(char *s) {
+void straight(int s,char c)
+{
+	char comm[2]="";
+	for(int i=0;i<s;i++)
+	{
+		//detectam poztita si verificam sa nu fie pe marginea cercului, iar daca e il rotim la 180 de grade
+		comm[0]=c;
+		comm[1]=NULL;
+		send(sock,comm,1,0);
+		strcpy(comm,"");
+	}
+}
+
+void rotate(int s,char d)
+{
+	char comm[2]="";
+	for(int i=0;i<s;i++)
+	{
+		comm[0]=d;
+		comm[1]=NULL;
+		send(sock,comm,1,0);
+		strcpy(comm,"");
+	}
+}
+
+void detect()
+{
+	poz[0]=x;
+	poz[1]=y;
+	straight(1,'f');//poate mai multe ori, depinde daca se misca destul
+	//comparam si determinam matricea fata me[a][b]
+}
+
+//o functie asemenatoare o sa detecteze inamicul
+
+void move()
+{
+	struct sockaddr_in address;
+    int valread;
+    struct sockaddr_in serv_addr;
+    char buffer[1024] = {0};
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        printf("\n Socket creation error \n");
+    }
+  
+    memset(&serv_addr, '0', sizeof(serv_addr));
+  
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(20232);
+      
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if(inet_pton(AF_INET, "193.226.12.217", &serv_addr.sin_addr)<=0) 
+    {
+        printf("\nInvalid address/ Address not supported \n");
+    }
+  
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+    {
+        printf("\nConnection Failed \n");
+    }
+
+	detect();
+	enemydetect();
+
+	while(poz[0]!=enemypoz[0] && poz[1]!=enemypoz[1])
+	{
+		//miscam robotul pana cand inamicul se afla pe directia fata a noastra 
+		//se misca in linie dreapta si dupa o secunda verifica din nou pozitia inamicului fata de el si repeta punctul anterior
+
+	}
+}
+
+/*void sendcommand(char *s) {
     struct sockaddr_in address;
     int sock = 0, valread;
     struct sockaddr_in serv_addr;
@@ -223,11 +302,11 @@ void sendcommand(char *s) {
       send(sock , s , strlen(s) , 0 );
     }
     else
-    printf("%s",s);*/
-}
+    printf("%s",s);
+}*/
 int main(int argc, char* argv[])
 {
-  /*
+  
 	//some boolean variables for different functionality within this
 	//program
 	bool trackObjects = true;
@@ -242,7 +321,6 @@ int main(int argc, char* argv[])
 	Mat threshold;
   Mat threshold2;
 	//x and y values for the location of the object
-	int x = 0, y = 0;
 	//create slider bars for HSV filtering
 	createTrackbars();
 	//video capture object to acquire webcam feed
@@ -283,7 +361,7 @@ int main(int argc, char* argv[])
 		if (trackObjects)
      {
 			trackFilteredObject(x, y, threshold, cameraFeed);
-      trackFilteredObject(x, y, threshold2, cameraFeed);
+      trackFilteredObject(x1, y1, threshold2, cameraFeed);
      }
 
 		//show frames
@@ -295,7 +373,7 @@ int main(int argc, char* argv[])
 		//image will not appear without this waitKey() command
 		waitKey(30);
 	}
- */
+ 
  sendcommand(argv[1]);
 
 	return 0;
